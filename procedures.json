@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Company Registration",
+    "steps": [
+      "Prepare incorporation documents",
+      "Submit to government office",
+      "Receive registration certificate"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Tax Compliance",
+    "steps": [
+      "Register for tax ID",
+      "File monthly VAT returns",
+      "Submit annual tax declaration"
+    ]
+  }
+]

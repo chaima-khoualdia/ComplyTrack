@@ -2,7 +2,6 @@ from . import user
 from . import startup
 from . import compliance_status
 from . import investor_request
-from . import procedure
 from . import reminder
 from . import source
 # if you keep/rename public.py, add it here too
@@ -10,10 +9,10 @@ from . import source
 __all__ = [
     "user",
     "startup",
-    "compliance",
+    "compliance_status",
     "investor_request",
-    "procedure",
     "reminder",
     "source",
     "badge",
+    "progress",
 ]

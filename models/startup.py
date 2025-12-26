@@ -12,9 +12,9 @@ class Startup(SQLModel, table=True):
     rne_number: str = Field(unique=True, nullable=False)
     sector: str = Field(nullable=False)
     badge_status: str = Field(default="red", nullable=False)
-    created_at: datetime = Field(nullable=False)
-
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     founder: "User" = Relationship(back_populates="startups")
     compliance_statuses: List["ComplianceStatus"] = Relationship(back_populates="startup")
     reminders: List["Reminder"] = Relationship(back_populates="startup")
     investor_requests: List["InvestorRequest"] = Relationship(back_populates="startup")
+    startup_procedures: List["StartupProcedure"] = Relationship(back_populates="startup")
