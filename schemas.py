@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 # ====== User Schemas ======
 class UserCreate(BaseModel):
@@ -26,7 +27,11 @@ class StartupCreate(BaseModel):
     name: str
     matricule_fiscal: str
     rne_number: str
-    sector: str
+    legal_form: str        # e.g. "SARL", "SA"
+    field: str             # e.g. "tech", "healthcare", "finance"
+    sector: str            # e.g. "private", "public", "ngo"
+    size: str              # e.g. "small", "medium", "large"
+    location: str          # e.g. "Tunis", "Sfax", "Free Zone"
 
 class StartupResponse(BaseModel):
     id: int
@@ -34,9 +39,46 @@ class StartupResponse(BaseModel):
     name: str
     matricule_fiscal: str
     rne_number: str
+    legal_form: str
+    field: str
     sector: str
+    size: str
+    location: str
     badge_status: str
     created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class StartupUpdate(BaseModel):
+    name: Optional[str] = None
+    matricule_fiscal: Optional[str] = None
+    rne_number: Optional[str] = None
+    legal_form: Optional[str] = None
+    field: Optional[str] = None
+    sector: Optional[str] = None
+    size: Optional[str] = None
+    location: Optional[str] = None
+    badge_status: Optional[str] = None
+
+class StartupCreatedResponse(BaseModel):
+    """Response for startup creation with auto-assigned procedures."""
+    # Startup fields
+    id: int
+    founder_id: int
+    name: str
+    matricule_fiscal: str
+    rne_number: str
+    legal_form: str
+    field: str
+    sector: str
+    size: str
+    location: str
+    badge_status: str
+    created_at: datetime
+    
+    # Auto-assigned procedures with full details
+    procedures: list[dict]  # List of dicts with id, procedure_id, procedure_name, procedure_description, steps, progress_percent, etc.
     
     class Config:
         from_attributes = True
@@ -63,16 +105,16 @@ class ComplianceStatusCreate(BaseModel):
     due_date: datetime
 
 class ComplianceStatusUpdate(BaseModel):
-    status: str = None
-    due_date: datetime = None
-    completed_at: datetime = None
+    status: Optional[str] = None
+    due_date: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 class ComplianceStatusResponse(BaseModel):
     id: int
     startup_id: int
     status: str
     due_date: datetime
-    completed_at: datetime = None
+    completed_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -120,33 +162,14 @@ class ComplianceBadgeResponse(BaseModel):
 # ====== Procedure Schemas ======
 class ProcedureCreate(BaseModel):
     name: str
-    description: str = None
+    description: Optional[str] = None
 
 class ProcedureResponse(BaseModel):
     id: int
     name: str
-    description: str = None
+    description: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-# ====== Step Schemas ======
-class StepCreate(BaseModel):
-    procedure_id: int
-    name: str
-    description: str = None
-    order: int
-    is_required: bool = True
-
-class StepResponse(BaseModel):
-    id: int
-    procedure_id: int
-    name: str
-    description: str = None
-    order: int
-    is_required: bool
     
     class Config:
         from_attributes = True
@@ -169,23 +192,22 @@ class StartupProcedureResponse(BaseModel):
         from_attributes = True
 
 class StartupProcedureWithDetails(BaseModel):
-    """Detailed response including procedure info and all steps."""
+    """Detailed response including procedure info and all steps from procedures.json."""
     id: int
     startup_id: int
     procedure_id: int
     procedure_name: str
-    procedure_description: str = None
+    procedure_description: Optional[str] = None
     completed_step_ids: list[int]
     total_steps: int
     completed_steps: int
     progress_percent: float
     assigned_at: datetime
-    steps: list[StepResponse]
+    steps: list[dict]  # Steps loaded from procedures.json with id, name, description, order, is_required
     
     class Config:
         from_attributes = True
 
 class StepToggle(BaseModel):
     """Toggle a step's completion status."""
-    step_id: int
     completed: bool

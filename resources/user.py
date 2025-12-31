@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 from datetime import datetime
 from passlib.context import CryptContext
 from db import get_session
-from models import User as UserModel
+from models import User as UserModel, Startup
 from schemas import UserCreate, UserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -54,9 +54,23 @@ def create_user(user_create: UserCreate, session: Session = Depends(get_session)
 
 @router.delete("/{user_id}")
 def delete_user(user_id: int, session: Session = Depends(get_session)):
+    """Delete a user. Prevents deletion if user is a founder of any startup."""
     user = session.get(UserModel, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user is founder of any startup
+    founder_startups = session.exec(
+        select(Startup).where(Startup.founder_id == user_id)
+    ).first()
+    
+    if founder_startups:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot delete user: Change the owner info for startups before deleting user"
+        )
+    
+    # User is not a founder, proceed with deletion
     session.delete(user)
     session.commit()
-    return {"message": "User deleted"}
+    return {"message": "User deleted successfully"}
