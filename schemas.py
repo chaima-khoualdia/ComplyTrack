@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 # ====== User Schemas ======
@@ -77,23 +77,34 @@ class StartupCreatedResponse(BaseModel):
     badge_status: str
     created_at: datetime
     
-    # Auto-assigned procedures with full details
-    procedures: list[dict]  # List of dicts with id, procedure_id, procedure_name, procedure_description, steps, progress_percent, etc.
+    # Auto-assigned procedures (one per procedure)
+    procedures: list[dict]
+    
+    # Compliance status (one per domain)
+    compliance_status: list[dict]
     
     class Config:
         from_attributes = True
 
 # ====== Source Schemas ======
 class SourceCreate(BaseModel):
-    step_id: int
-    name: str
+    title: str
     url: str
+    description: Optional[str] = None
+    type: str  # "law", "portal", "guide"
+    country: str = "Tunisia"
+    language: str = "fr"  # "fr", "ar", "en"
+    last_verified: Optional[datetime] = None
 
 class SourceResponse(BaseModel):
     id: int
-    step_id: int
-    name: str
+    title: str
     url: str
+    description: Optional[str] = None
+    type: str
+    country: str
+    language: str
+    last_verified: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -101,6 +112,8 @@ class SourceResponse(BaseModel):
 # ====== Compliance Status Schemas ======
 class ComplianceStatusCreate(BaseModel):
     startup_id: int
+    procedure_id: Optional[int] = None
+    domain: str
     status: str
     due_date: datetime
 
@@ -112,12 +125,25 @@ class ComplianceStatusUpdate(BaseModel):
 class ComplianceStatusResponse(BaseModel):
     id: int
     startup_id: int
+    procedure_id: Optional[int] = None
+    domain: str
     status: str
     due_date: datetime
     completed_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
+
+class ComplianceStatusDetailedResponse(BaseModel):
+    """Compliance status with procedure details grouped by domain."""
+    id: int
+    startup_id: int
+    procedure_id: int
+    procedure_name: str
+    domain: str
+    status: str
+    due_date: datetime
+    completed_at: Optional[datetime] = None
 
 # ====== Reminder Schemas ======
 class ReminderCreate(BaseModel):
@@ -180,16 +206,32 @@ class StartupProcedureAssign(BaseModel):
     procedure_ids: list[int]
 
 class StartupProcedureResponse(BaseModel):
-    """Basic response for startup procedure assignment with progress."""
+    """Response for a startup procedure (one record per procedure, not per step)."""
     id: int
     startup_id: int
     procedure_id: int
-    completed_step_ids: list[int]
-    progress_percent: float
+    procedure_name: str
+    domain: str
+    status: str  # pending, in_progress, completed, overdue
+    due_date: date
     assigned_at: datetime
+    completed_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
+
+class ProcedureStatusUpdate(BaseModel):
+    """
+    Update procedure status and/or step completion.
+    
+    Can be used in two ways:
+    1. Update procedure status only: {"status": "in_progress"}
+    2. Update step completion: {"step_id": 301, "completed": true}
+    3. Both: {"status": "in_progress", "step_id": 301, "completed": true}
+    """
+    status: str = None  # pending, in_progress, completed, overdue
+    step_id: int = None  # Optional: ID of step to toggle completion
+    completed: bool = None  # Optional: whether step is completed (used if step_id provided)
 
 class StartupProcedureWithDetails(BaseModel):
     """Detailed response including procedure info and all steps from procedures.json."""
@@ -204,6 +246,7 @@ class StartupProcedureWithDetails(BaseModel):
     progress_percent: float
     assigned_at: datetime
     steps: list[dict]  # Steps loaded from procedures.json with id, name, description, order, is_required
+    sources: list[dict] = []  # Enriched sources with title, url, description
     
     class Config:
         from_attributes = True

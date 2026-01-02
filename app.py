@@ -9,6 +9,7 @@ from resources import (
     source,
     badge,
     startup_procedure,
+    compliance_status,
 )
 
 app = FastAPI(

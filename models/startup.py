@@ -11,7 +11,6 @@ class Startup(SQLModel, table=True):
     matricule_fiscal: str = Field(unique=True, nullable=False)
     rne_number: str = Field(unique=True, nullable=False)
 
-    # ✅ New descriptive fields for rules.json
     legal_form: str = Field(nullable=False)   # e.g. "SARL", "SA"
     field: str = Field(nullable=False)        # e.g. "tech", "healthcare", "finance"
     sector: str = Field(nullable=False)       # e.g. "private", "public", "ngo"

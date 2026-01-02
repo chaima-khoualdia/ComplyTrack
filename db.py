@@ -1,5 +1,4 @@
 from sqlmodel import SQLModel, create_engine, Session
-from models import ProcedureProgress, startup, User
 # Use SQLite for development (creates a local file scos.db)
 DATABASE_URL = "sqlite:///./scos.db"
 

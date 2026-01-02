@@ -4,7 +4,7 @@ Handles progress calculation and step completion tracking using procedures.json.
 """
 
 from models import StartupProcedure
-from services.procedure_loader import load_procedures, get_procedure_by_id
+from services.procedures_service import load_procedures, get_procedure_by_id
 from sqlmodel import Session
 
 
@@ -99,6 +99,10 @@ def toggle_step_completion(
     # Assign new list to trigger change detection
     sp.completed_step_ids = new_ids
     
+    # Calculate and persist progress_percent
+    progress = calculate_progress(sp, procedures)
+    sp.progress_percent = progress
+    
     # Mark the field as modified to ensure SQLAlchemy persists the change
     from sqlalchemy.orm import attributes
     attributes.flag_modified(sp, 'completed_step_ids')
@@ -108,14 +112,11 @@ def toggle_step_completion(
     session.commit()
     session.refresh(sp)
     
-    # Calculate progress after refresh to ensure we have updated data
-    progress = calculate_progress(sp, procedures)
-    
     return {
         "id": sp.id,
         "startup_id": sp.startup_id,
         "procedure_id": sp.procedure_id,
         "completed_step_ids": sp.completed_step_ids or [],
-        "progress_percent": progress,
+        "progress_percent": sp.progress_percent,
         "assigned_at": sp.assigned_at
     }

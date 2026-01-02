@@ -1,19 +1,17 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from db import get_session
-from models import Startup, StartupProcedure
+from models import Startup, StartupProcedure, ComplianceStatus, Reminder, InvestorRequest
 from schemas import (
     StartupCreate, 
     StartupResponse, 
     StartupUpdate, 
     StartupCreatedResponse
 )
-from services import (
-    auto_assign_procedures, 
-    list_startup_procedures
-)
+from services import initialize_startup_procedures
+from services.compliance_service import sync_compliance_status_from_procedures
 
 router = APIRouter(prefix="/startups", tags=["startups"])
 
@@ -46,9 +44,13 @@ def create_startup(
     session: Session = Depends(get_session)
 ):
     """
-    Create a new startup and automatically assign matching procedures.
-    Returns startup details along with all auto-assigned procedures and their steps.
-    Procedures are assigned based on legal_form, industry, size, and location metadata.
+    Create a new startup and automatically populate procedures and compliance tracking.
+    
+    When a startup is created:
+    1. One StartupProcedure record per applicable procedure (with procedure_name, domain, status, due_date)
+    2. One ComplianceStatus record per domain (tracking overall domain completion)
+    
+    Returns startup details with procedures and compliance status.
     """
     # Check if matricule already exists
     existing = session.exec(
@@ -82,28 +84,20 @@ def create_startup(
     session.commit()
     session.refresh(startup)
     
-    # Auto-assign procedures based on startup attributes
+    # Auto-populate procedures and compliance status
     try:
-        auto_assign_procedures(
-            startup.id,
-            startup.legal_form,
-            startup.field,
-            startup.size,
-            startup.location,
-            session
-        )
+        initialize_startup_procedures(startup, session, mode="auto")
+        # Sync compliance status for all domains based on procedures
+        sync_compliance_status_from_procedures(startup.id, session)
     except Exception as e:
         # Log error but don't fail startup creation
-        print(f"Error auto-assigning procedures: {e}")
+        print(f"Error initializing procedures and compliance: {e}")
     
-    # Get assigned procedures with full details
-    try:
-        procedures = list_startup_procedures(startup.id, session)
-    except Exception as e:
-        print(f"Error fetching assigned procedures: {e}")
-        procedures = []
+    # Get procedures and compliance status
+    procedures = session.query(StartupProcedure).filter_by(startup_id=startup.id).all()
+    compliance_statuses = session.query(ComplianceStatus).filter_by(startup_id=startup.id).all()
     
-    # Build response with startup and procedures
+    # Build response
     return {
         "id": startup.id,
         "founder_id": startup.founder_id,
@@ -117,7 +111,31 @@ def create_startup(
         "location": startup.location,
         "badge_status": startup.badge_status,
         "created_at": startup.created_at,
-        "procedures": procedures
+        "procedures": [
+            {
+                "id": p.id,
+                "startup_id": p.startup_id,
+                "procedure_id": p.procedure_id,
+                "procedure_name": p.procedure_name,
+                "domain": p.domain,
+                "status": p.status,
+                "due_date": p.due_date,
+                "assigned_at": p.assigned_at,
+                "completed_at": p.completed_at
+            }
+            for p in procedures
+        ],
+        "compliance_status": [
+            {
+                "id": c.id,
+                "startup_id": c.startup_id,
+                "domain": c.domain,
+                "status": c.status,
+                "due_date": c.due_date,
+                "completed_at": c.completed_at
+            }
+            for c in compliance_statuses
+        ]
     }
 
 @router.put("/{startup_id}", response_model=StartupResponse)
@@ -143,20 +161,56 @@ def update_startup(
 
 @router.delete("/{startup_id}")
 def delete_startup(startup_id: int, session: Session = Depends(get_session)):
-    """Delete a startup and cascade delete all related startup_procedure records."""
+    """
+    Delete a startup and cascade delete all related data.
+    This removes:
+    - StartupProcedure records
+    - ComplianceStatus records
+    - Reminder records
+    - InvestorRequest records
+    
+    Deletes children first to avoid IntegrityError from NOT NULL startup_id constraint.
+    """
     startup = session.get(Startup, startup_id)
     if not startup:
         raise HTTPException(status_code=404, detail="Startup not found")
     
-    # Cascade delete all startup_procedure records for this startup
+    # Delete all related records FIRST, before deleting startup
+    # This prevents SQLAlchemy from trying to set startup_id=None
+    
+    # Delete StartupProcedure records
     startup_procedures = session.exec(
         select(StartupProcedure).where(StartupProcedure.startup_id == startup_id)
     ).all()
-    
     for sp in startup_procedures:
         session.delete(sp)
     
-    # Delete the startup
+    # Delete ComplianceStatus records
+    compliance_statuses = session.exec(
+        select(ComplianceStatus).where(ComplianceStatus.startup_id == startup_id)
+    ).all()
+    for cs in compliance_statuses:
+        session.delete(cs)
+    
+    # Delete Reminder records
+    reminders = session.exec(
+        select(Reminder).where(Reminder.startup_id == startup_id)
+    ).all()
+    for reminder in reminders:
+        session.delete(reminder)
+    
+    # Delete InvestorRequest records
+    investor_requests = session.exec(
+        select(InvestorRequest).where(InvestorRequest.startup_id == startup_id)
+    ).all()
+    for ir in investor_requests:
+        session.delete(ir)
+    
+    # Flush to ensure all child deletions are processed before startup deletion
+    session.flush()
+    
+    # Finally, delete the startup itself
     session.delete(startup)
     session.commit()
-    return {"message": "Startup and related procedures deleted successfully"}
+    
+    return {"message": "Startup and all related data deleted successfully"}

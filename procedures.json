@@ -1,109 +1,131 @@
-[
-  {
-    "id": 1,
-    "name": "Register SARL",
-    "description": "Official registration of a Société à Responsabilité Limitée at the commercial registry.",
-    "legal_forms": ["SARL"],
-    "industries": ["all"],
-    "sizes": ["small", "medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 101, "name": "Draft articles of association", "order": 1, "description": "Prepare legal articles", "is_required": true},
-      {"id": 102, "name": "Deposit capital at bank", "order": 2, "description": "Deposit minimum capital", "is_required": true},
-      {"id": 103, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
-    ]
-  },
-  {
-    "id": 2,
-    "name": "Register SA",
-    "description": "Official registration of a Société Anonyme with shareholder requirements.",
-    "legal_forms": ["SA"],
-    "industries": ["all"],
-    "sizes": ["medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 201, "name": "Prepare shareholder registry", "order": 1, "description": "Create shareholder list", "is_required": true},
-      {"id": 202, "name": "Appoint board of directors", "order": 2, "description": "Select board members", "is_required": true},
-      {"id": 203, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
-    ]
-  },
-  {
-    "id": 3,
-    "name": "Tax Compliance",
-    "description": "Obtain tax identification and register for VAT.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["all"],
-    "sizes": ["small", "medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 301, "name": "Apply for tax ID", "order": 1, "description": "Register with tax authority", "is_required": true},
-      {"id": 302, "name": "Register for VAT", "order": 2, "description": "Enroll in VAT program", "is_required": false}
-    ]
-  },
-  {
-    "id": 4,
-    "name": "Finance Sector Licensing",
-    "description": "Obtain authorization from the Central Bank of Tunisia for financial activities.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["finance"],
-    "sizes": ["medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 401, "name": "Submit license application", "order": 1, "description": "File with central bank", "is_required": true},
-      {"id": 402, "name": "Provide AML/KYC policy", "order": 2, "description": "Submit compliance policies", "is_required": true}
-    ]
-  },
-  {
-    "id": 5,
-    "name": "Healthcare Licensing",
-    "description": "Obtain approval from the Ministry of Health for medical services.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["healthcare"],
-    "sizes": ["small", "medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 501, "name": "Submit medical facility application", "order": 1, "description": "Register facility with ministry", "is_required": true},
-      {"id": 502, "name": "Provide staff certifications", "order": 2, "description": "Submit staff credentials", "is_required": true}
-    ]
-  },
-  {
-    "id": 6,
-    "name": "Tech/IP Compliance",
-    "description": "Register intellectual property and ensure data protection compliance.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["tech"],
-    "sizes": ["small", "medium", "large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 601, "name": "Register patents or trademarks", "order": 1, "description": "File IP with national office", "is_required": false},
-      {"id": 602, "name": "Comply with data protection law", "order": 2, "description": "Implement GDPR/local standards", "is_required": true}
-    ]
-  },
-  {
-    "id": 7,
-    "name": "Large Company Reporting",
-    "description": "Additional reporting obligations for companies with more than 50 employees.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["all"],
-    "sizes": ["large"],
-    "countries": ["TN"],
-    "steps": [
-      {"id": 701, "name": "Submit workforce report", "order": 1, "description": "File employment statistics", "is_required": true},
-      {"id": 702, "name": "File annual audited accounts", "order": 2, "description": "Submit audited financials", "is_required": true}
-    ]
-  },
-  {
-    "id": 8,
-    "name": "Free Zone Compliance",
-    "description": "Special customs and trade procedures for companies in Tunisian free zones.",
-    "legal_forms": ["SARL", "SA"],
-    "industries": ["all"],
-    "sizes": ["small", "medium", "large"],
-    "countries": ["TN"],
-    "locations": ["Free Zone"],
-    "steps": [
-      {"id": 801, "name": "Register with free zone authority", "order": 1, "description": "Enroll in free zone program", "is_required": true},
-      {"id": 802, "name": "Obtain customs clearance", "order": 2, "description": "Get trade authorization", "is_required": true}
+{
+  "procedures": {
+    "legal_registration": [
+      {
+        "id": 1,
+        "name": "Register SARL",
+        "description": "Official registration of a Société à Responsabilité Limitée at the commercial registry.",
+        "legal_forms": ["SARL"],
+        "industries": ["all"],
+        "sizes": ["small", "medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 101, "name": "Draft articles of association", "order": 1, "description": "Prepare legal articles", "is_required": true},
+          {"id": 102, "name": "Deposit capital at bank", "order": 2, "description": "Deposit minimum capital", "is_required": true},
+          {"id": 103, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
+        ],
+        "source_ids": [1]
+      },
+      {
+        "id": 2,
+        "name": "Register SA",
+        "description": "Official registration of a Société Anonyme with shareholder requirements.",
+        "legal_forms": ["SA"],
+        "industries": ["all"],
+        "sizes": ["medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 201, "name": "Prepare shareholder registry", "order": 1, "description": "Create shareholder list", "is_required": true},
+          {"id": 202, "name": "Appoint board of directors", "order": 2, "description": "Select board members", "is_required": true},
+          {"id": 203, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
+        ],
+        "source_ids": [1]
+      }
+    ],
+    "tax_compliance": [
+      {
+        "id": 3,
+        "name": "Tax Compliance",
+        "description": "Obtain tax identification and register for VAT.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["all"],
+        "sizes": ["small", "medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 301, "name": "Apply for tax ID", "order": 1, "description": "Register with tax authority", "is_required": true},
+          {"id": 302, "name": "Register for VAT", "order": 2, "description": "Enroll in VAT program", "is_required": false}
+        ],
+        "source_ids": [2]
+      }
+    ],
+    "auditing_reporting": [
+      {
+        "id": 7,
+        "name": "Large Company Reporting",
+        "description": "Additional reporting obligations for companies with more than 50 employees.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["all"],
+        "sizes": ["large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 701, "name": "Submit workforce report", "order": 1, "description": "File employment statistics", "is_required": true},
+          {"id": 702, "name": "File annual audited accounts", "order": 2, "description": "Submit audited financials", "is_required": true}
+        ],
+        "source_ids": [2]
+      }
+    ],
+    "licensing": [
+      {
+        "id": 4,
+        "name": "Finance Sector Licensing",
+        "description": "Obtain authorization from the Central Bank of Tunisia for financial activities.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["finance"],
+        "sizes": ["medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 401, "name": "Submit license application", "order": 1, "description": "File with central bank", "is_required": true},
+          {"id": 402, "name": "Provide AML/KYC policy", "order": 2, "description": "Submit compliance policies", "is_required": true}
+        ],
+        "source_ids": [1, 2]
+      },
+      {
+        "id": 5,
+        "name": "Healthcare Licensing",
+        "description": "Obtain approval from the Ministry of Health for medical services.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["healthcare"],
+        "sizes": ["small", "medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 501, "name": "Submit medical facility application", "order": 1, "description": "Register facility with ministry", "is_required": true},
+          {"id": 502, "name": "Provide staff certifications", "order": 2, "description": "Submit staff credentials", "is_required": true}
+        ],
+        "source_ids": [3]
+      }
+    ],
+    "tech_ip_compliance": [
+      {
+        "id": 6,
+        "name": "Tech/IP Compliance",
+        "description": "Register intellectual property and ensure data protection compliance.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["tech"],
+        "sizes": ["small", "medium", "large"],
+        "countries": ["TN"],
+        "steps": [
+          {"id": 601, "name": "Register patents or trademarks", "order": 1, "description": "File IP with national office", "is_required": false},
+          {"id": 602, "name": "Comply with data protection law", "order": 2, "description": "Implement GDPR/local standards", "is_required": true}
+        ],
+        "source_ids": [1]
+      }
+    ],
+    "special_zones": [
+      {
+        "id": 8,
+        "name": "Free Zone Compliance",
+        "description": "Special customs and trade procedures for companies in Tunisian free zones.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["all"],
+        "sizes": ["small", "medium", "large"],
+        "countries": ["TN"],
+        "locations": ["Free Zone"],
+        "steps": [
+          {"id": 801, "name": "Register with free zone authority", "order": 1, "description": "Enroll in free zone program", "is_required": true},
+          {"id": 802, "name": "Obtain customs clearance", "order": 2, "description": "Get trade authorization", "is_required": true}
+        ],
+        "source_ids": [1, 2]
+      }
     ]
   }
-]
+}

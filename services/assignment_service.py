@@ -1,13 +1,77 @@
 """
 Assignment Service
-Handles procedure assignment to startups and deletion of assignments.
+Handles procedure assignment to startups - creating and deleting StartupProcedure records.
+Responsible only for database operations on StartupProcedure, not ComplianceStatus.
 """
 
 from typing import List
 from sqlmodel import Session, select
+from datetime import datetime, timedelta
+import json
 from models import StartupProcedure, Startup
-from services.procedure_loader import load_procedures, get_procedure_by_id
-from services.progress_service import calculate_progress
+from services.procedures_service import load_procedures, get_procedure_by_id, get_matching_procedures
+from services.compliance_service import sync_compliance_status_from_procedures
+
+
+def initialize_startup_procedures(
+    startup: Startup,
+    session: Session,
+    mode: str = "auto"
+) -> None:
+    """
+    Create StartupProcedure records for a startup.
+    Does NOT create ComplianceStatus records - that's handled by the caller or compliance service.
+    
+    Args:
+        startup: The Startup object
+        session: Database session
+        mode: "auto" for auto-assignment or "manual" for manual list (not used here)
+    """
+    if mode != "auto":
+        return
+    
+    # Get applicable procedures based on startup attributes
+    matching_ids = get_matching_procedures(
+        legal_form=startup.legal_form,
+        field=startup.field,
+        size=startup.size,
+        location=startup.location if startup.location != "Tunis" else None
+    )
+    
+    procedures = load_procedures()
+    
+    # Create StartupProcedure records (one per procedure)
+    for procedure_id in matching_ids:
+        proc = get_procedure_by_id(procedure_id, procedures)
+        if not proc:
+            continue
+        
+        # Check if already exists
+        existing = session.query(StartupProcedure).filter_by(
+            startup_id=startup.id,
+            procedure_id=procedure_id
+        ).first()
+        
+        if existing:
+            continue
+        
+        procedure_name = proc.get("name", "Unknown")
+        domain = proc.get("domain", "other")
+        due_date = (datetime.utcnow() + timedelta(days=30)).date()
+        
+        startup_procedure = StartupProcedure(
+            startup_id=startup.id,
+            procedure_id=procedure_id,
+            procedure_name=procedure_name,
+            domain=domain,
+            status="pending",
+            due_date=due_date,
+            assigned_at=datetime.utcnow(),
+            completed_step_ids=json.dumps([])  # Initialize as empty JSON array
+        )
+        session.add(startup_procedure)
+    
+    session.commit()
 
 
 def assign_procedures_to_startup(
@@ -16,9 +80,9 @@ def assign_procedures_to_startup(
     session: Session
 ) -> list:
     """
-    Assign one or more procedures to a startup.
+    Assign one or more procedures to a startup (manual assignment).
     Validates procedures exist in procedures.json and creates StartupProcedure records.
-    Returns dicts with progress calculated from procedures.json.
+    Syncs compliance status after assignment.
     
     Args:
         startup_id: ID of the startup
@@ -26,7 +90,7 @@ def assign_procedures_to_startup(
         session: Database session
     
     Returns:
-        List of dicts with assignment details and progress
+        List of created/existing StartupProcedure records
     
     Raises:
         ValueError: If startup not found
@@ -57,11 +121,21 @@ def assign_procedures_to_startup(
             created_assignments.append(existing)
             continue
 
-        # Create assignment
+        # Get procedure details
+        procedure_name = procedure.get("name", "Unknown")
+        domain = procedure.get("domain", "other")
+        due_date = (datetime.utcnow() + timedelta(days=30)).date()
+
+        # Create assignment with new model fields
         startup_procedure = StartupProcedure(
             startup_id=startup_id,
             procedure_id=procedure_id,
-            completed_step_ids=[]
+            procedure_name=procedure_name,
+            domain=domain,
+            status="pending",
+            due_date=due_date,
+            assigned_at=datetime.utcnow(),
+            completed_step_ids=json.dumps([])  # Initialize as empty JSON array
         )
         session.add(startup_procedure)
         created_assignments.append(startup_procedure)
@@ -70,20 +144,10 @@ def assign_procedures_to_startup(
     for sp in created_assignments:
         session.refresh(sp)
     
-    # Return dicts with progress calculated
-    result = []
-    for sp in created_assignments:
-        progress = calculate_progress(sp, procedures)
-        result.append({
-            "id": sp.id,
-            "startup_id": sp.startup_id,
-            "procedure_id": sp.procedure_id,
-            "completed_step_ids": sp.completed_step_ids or [],
-            "progress_percent": progress,
-            "assigned_at": sp.assigned_at
-        })
+    # Sync compliance status for all affected domains
+    sync_compliance_status_from_procedures(startup_id, session)
     
-    return result
+    return created_assignments
 
 
 def delete_startup_procedure(
@@ -91,7 +155,7 @@ def delete_startup_procedure(
     session: Session
 ) -> dict:
     """
-    Delete a startup procedure assignment.
+    Delete a startup procedure assignment and sync compliance status.
     
     Args:
         startup_procedure_id: ID of the StartupProcedure to delete
@@ -107,7 +171,12 @@ def delete_startup_procedure(
     if not sp:
         raise ValueError(f"Startup procedure assignment {startup_procedure_id} not found")
     
+    startup_id = sp.startup_id
     session.delete(sp)
     session.commit()
     
+    # Sync compliance status for all affected domains
+    sync_compliance_status_from_procedures(startup_id, session)
+    
     return {"message": "Procedure assignment deleted successfully"}
+
