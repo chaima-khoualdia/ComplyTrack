@@ -8,14 +8,59 @@ from services.compliance_service import (
     compute_badge,
     summarize_statuses,
     get_startup_compliance_statuses,
+    build_compliance_summary_from_procedures,
 )
 from services.procedures_service import get_procedure_by_id
+from services.auth_service import require_roles
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
 
+@router.get("/summary/{startup_id}")
+def get_compliance_summary(
+    startup_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
+    """
+    Get comprehensive compliance summary for a startup.
+    
+    Returns real compliance data from StartupProcedure records:
+    - Summary counts (pending, in_progress, complete, overdue, total)
+    - Badge status (green/yellow/red)
+    - Compliance procedures grouped by domain with details
+    
+    This is the main endpoint for investor dashboards.
+    """
+    startup = session.get(Startup, startup_id)
+    if not startup:
+        raise HTTPException(status_code=404, detail="Startup not found")
+    
+    # Build comprehensive summary from StartupProcedure records
+    compliance_data = build_compliance_summary_from_procedures(startup_id, session)
+    
+    # Update startup badge status if it changed
+    if startup.badge_status != compliance_data["badge_status"]:
+        startup.badge_status = compliance_data["badge_status"]
+        session.add(startup)
+        session.commit()
+    
+    return {
+        "startup_name": startup.name,
+        "matricule_fiscal": startup.matricule_fiscal,
+        "badge_status": compliance_data["badge_status"],
+        "summary": compliance_data["summary"],
+        "compliance_by_domain": compliance_data["compliance_by_domain"]
+    }
+
+
+
 @router.get("/startup/{startup_id}")
-def list_by_startup(startup_id: int, session: Session = Depends(get_session)):
+def list_by_startup(
+    startup_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """List all compliance statuses for a startup, grouped by domain."""
     startup = session.get(Startup, startup_id)
     if not startup:
@@ -33,12 +78,17 @@ def list_by_startup(startup_id: int, session: Session = Depends(get_session)):
 
 
 @router.get("/badge/{identifier}")
-def get_compliance_badge(identifier: str, session: Session = Depends(get_session)):
+def get_compliance_badge(
+    identifier: str,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """
     Get compliance badge for a startup (investor-facing).
     
     Identifier can be startup ID (integer) or matricule_fiscal (string).
     Returns: startup_name, matricule_fiscal, badge_status, summary, and compliance grouped by domain.
+    Uses real-time data from StartupProcedure records.
     """
     startup = None
     
@@ -54,22 +104,31 @@ def get_compliance_badge(identifier: str, session: Session = Depends(get_session
     if not startup:
         raise HTTPException(status_code=404, detail="Startup not found")
     
-    # Get compliance statuses and compute summary
-    statuses = get_startup_compliance_statuses(startup.id, session)
-    summary = summarize_statuses(statuses)
-    compliance_by_domain = _group_compliance_by_domain(statuses)
+    # Build comprehensive summary from StartupProcedure records
+    compliance_data = build_compliance_summary_from_procedures(startup.id, session)
+    
+    # Update startup badge status if it changed
+    if startup.badge_status != compliance_data["badge_status"]:
+        startup.badge_status = compliance_data["badge_status"]
+        session.add(startup)
+        session.commit()
     
     return {
         "startup_name": startup.name,
         "matricule_fiscal": startup.matricule_fiscal,
-        "badge_status": startup.badge_status,
-        "summary": summary,
-        "compliance_by_domain": compliance_by_domain,
+        "badge_status": compliance_data["badge_status"],
+        "summary": compliance_data["summary"],
+        "compliance_by_domain": compliance_data["compliance_by_domain"]
     }
 
 
 @router.get("/{startup_id}/{domain}", response_model=ComplianceStatusResponse)
-def get_status(startup_id: int, domain: str, session: Session = Depends(get_session)):
+def get_status(
+    startup_id: int,
+    domain: str,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """Get compliance status for a specific startup and domain."""
     # Verify startup exists
     startup = session.get(Startup, startup_id)
@@ -94,7 +153,8 @@ def get_status(startup_id: int, domain: str, session: Session = Depends(get_sess
 @router.post("/", response_model=ComplianceStatusResponse)
 def create_status(
     status_data: ComplianceStatusCreate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """Create a new compliance status record."""
     # Verify startup exists
@@ -123,7 +183,8 @@ def update_status(
     startup_id: int,
     domain: str,
     status_update: ComplianceStatusUpdate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """Update a compliance status and return badge info with grouped compliance statuses."""
     # Verify startup exists
@@ -176,7 +237,12 @@ def update_status(
 
 
 @router.delete("/{startup_id}/{domain}")
-def delete_status(startup_id: int, domain: str, session: Session = Depends(get_session)):
+def delete_status(
+    startup_id: int,
+    domain: str,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup")),
+):
     """Delete a compliance status for a specific startup and domain."""
     # Verify startup exists
     startup = session.get(Startup, startup_id)

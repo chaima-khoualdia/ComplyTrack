@@ -12,17 +12,25 @@ from schemas import (
 )
 from services import initialize_startup_procedures
 from services.compliance_service import sync_compliance_status_from_procedures
+from services.auth_service import require_roles
 
 router = APIRouter(prefix="/startups", tags=["startups"])
 
 
 @router.get("/", response_model=list[StartupResponse])
-def list_startups(session: Session = Depends(get_session)):
+def list_startups(
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """List all startups."""
     return session.exec(select(Startup)).all()
 
 @router.get("/{startup_id}", response_model=StartupResponse)
-def get_startup(startup_id: int, session: Session = Depends(get_session)):
+def get_startup(
+    startup_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """Get a startup by ID."""
     startup = session.get(Startup, startup_id)
     if not startup:
@@ -30,7 +38,11 @@ def get_startup(startup_id: int, session: Session = Depends(get_session)):
     return startup
 
 @router.get("/by-matricule/{matricule}", response_model=StartupResponse)
-def get_by_matricule(matricule: str, session: Session = Depends(get_session)):
+def get_by_matricule(
+    matricule: str,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "investor", "startup", "owner", "worker")),
+):
     """Get a startup by matricule fiscal."""
     stmt = select(Startup).where(Startup.matricule_fiscal == matricule)
     startup = session.exec(stmt).first()
@@ -41,10 +53,12 @@ def get_by_matricule(matricule: str, session: Session = Depends(get_session)):
 @router.post("/", response_model=StartupCreatedResponse)
 def create_startup(
     startup_data: StartupCreate, 
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "owner")),
 ):
     """
     Create a new startup and automatically populate procedures and compliance tracking.
+    Owner users must use this endpoint after registration to create their startup.
     
     When a startup is created:
     1. One StartupProcedure record per applicable procedure (with procedure_name, domain, status, due_date)
@@ -66,6 +80,10 @@ def create_startup(
     if existing_rne:
         raise HTTPException(status_code=400, detail="RNE number already registered")
     
+    # Enforce founder ownership for owner role
+    if current_user.role.lower() == "owner" and startup_data.founder_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Owner users can only create their own startup")
+
     # Create startup
     startup = Startup(
         founder_id=startup_data.founder_id,
@@ -142,12 +160,15 @@ def create_startup(
 def update_startup(
     startup_id: int,
     startup_update: StartupUpdate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup")),
 ):
     """Update a startup's information."""
     startup = session.get(Startup, startup_id)
     if not startup:
         raise HTTPException(status_code=404, detail="Startup not found")
+    if current_user.role.lower() != "admin" and startup.founder_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed to update this startup")
     
     # Update only provided fields
     for field, value in startup_update.dict(exclude_unset=True).items():
@@ -160,7 +181,11 @@ def update_startup(
     return startup
 
 @router.delete("/{startup_id}")
-def delete_startup(startup_id: int, session: Session = Depends(get_session)):
+def delete_startup(
+    startup_id: int,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin")),
+):
     """
     Delete a startup and cascade delete all related data.
     This removes:

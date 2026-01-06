@@ -25,3 +25,4 @@ class Startup(SQLModel, table=True):
     reminders: List["Reminder"] = Relationship(back_populates="startup")
     investor_requests: List["InvestorRequest"] = Relationship(back_populates="startup")
     startup_procedures: List["StartupProcedure"] = Relationship(back_populates="startup")
+    requests: List["Request"] = Relationship(back_populates="startup")

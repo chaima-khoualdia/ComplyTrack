@@ -154,3 +154,93 @@ def sync_compliance_status_from_procedures(
         compliance.completed_at = completed_at
         session.add(compliance)
         session.commit()
+
+
+def build_compliance_summary_from_procedures(startup_id: int, session: Session) -> dict:
+    """
+    Build a comprehensive compliance summary from StartupProcedure records.
+    
+    Groups procedures by domain, calculates status counts, and determines badge status.
+    Uses actual procedure data (not ComplianceStatus) for real-time compliance view.
+    
+    Args:
+        startup_id: ID of the startup
+        session: Database session
+        
+    Returns:
+        Dictionary with:
+        - summary: counts of pending, in_progress, complete, overdue, total
+        - badge_status: "green", "yellow", or "red"
+        - compliance_by_domain: grouped procedures by domain with details
+    """
+    from models import StartupProcedure
+    from datetime import date
+    
+    # Get all procedures for this startup
+    procedures = session.query(StartupProcedure).filter_by(
+        startup_id=startup_id
+    ).order_by(StartupProcedure.domain, StartupProcedure.due_date).all()
+    
+    if not procedures:
+        return {
+            "summary": {
+                "pending": 0,
+                "in_progress": 0,
+                "complete": 0,
+                "overdue": 0,
+                "total": 0
+            },
+            "badge_status": "yellow",
+            "compliance_by_domain": {}
+        }
+    
+    # Update overdue status based on current date
+    today = date.today()
+    for proc in procedures:
+        if proc.status not in ["completed", "complete"] and proc.due_date < today:
+            proc.status = "overdue"
+            session.add(proc)
+    session.commit()
+    
+    # Build summary counts
+    summary = {
+        "pending": sum(1 for p in procedures if p.status == "pending"),
+        "in_progress": sum(1 for p in procedures if p.status == "in_progress"),
+        "complete": sum(1 for p in procedures if p.status in ["completed", "complete"]),
+        "overdue": sum(1 for p in procedures if p.status == "overdue"),
+        "total": len(procedures)
+    }
+    
+    # Determine badge status
+    has_overdue = any(p.status == "overdue" for p in procedures)
+    all_complete = all(p.status in ["completed", "complete"] for p in procedures)
+    
+    if has_overdue:
+        badge_status = "red"
+    elif all_complete:
+        badge_status = "green"
+    else:
+        badge_status = "yellow"
+    
+    # Group procedures by domain
+    compliance_by_domain = {}
+    for proc in procedures:
+        domain = proc.domain
+        if domain not in compliance_by_domain:
+            compliance_by_domain[domain] = []
+        
+        compliance_by_domain[domain].append({
+            "id": proc.id,
+            "procedure_id": proc.procedure_id,
+            "procedure_name": proc.procedure_name,
+            "status": proc.status,
+            "due_date": proc.due_date.isoformat() if proc.due_date else None,
+            "completed_at": proc.completed_at.isoformat() if proc.completed_at else None,
+            "domain": proc.domain
+        })
+    
+    return {
+        "summary": summary,
+        "badge_status": badge_status,
+        "compliance_by_domain": compliance_by_domain
+    }

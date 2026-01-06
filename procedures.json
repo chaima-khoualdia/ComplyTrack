@@ -4,30 +4,49 @@
       {
         "id": 1,
         "name": "Register SARL",
-        "description": "Official registration of a Société à Responsabilité Limitée at the commercial registry.",
+        "description": "Official registration of a Société à Responsabilité Limitée at the commercial registry per Tunisian Commercial Code.",
         "legal_forms": ["SARL"],
         "industries": ["all"],
         "sizes": ["small", "medium", "large"],
         "countries": ["TN"],
+        "due_days": 15,
+        "authority": "Commercial Registry (Tribunal de Première Instance)",
+        "required_documents": [
+          "Articles of association (3 copies)",
+          "Proof of capital deposit",
+          "Identity documents of shareholders",
+          "Certificate of non-conviction",
+          "Proof of address"
+        ],
         "steps": [
-          {"id": 101, "name": "Draft articles of association", "order": 1, "description": "Prepare legal articles", "is_required": true},
-          {"id": 102, "name": "Deposit capital at bank", "order": 2, "description": "Deposit minimum capital", "is_required": true},
-          {"id": 103, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
+          {"id": 101, "name": "Draft articles of association", "order": 1, "description": "Prepare legal articles per Tunisian law", "is_required": true},
+          {"id": 102, "name": "Deposit capital at bank", "order": 2, "description": "Deposit minimum capital (TND 1000 for SARL)", "is_required": true},
+          {"id": 103, "name": "Register with commercial court", "order": 3, "description": "File registration documents with commercial registry", "is_required": true}
         ],
         "source_ids": [1]
       },
       {
         "id": 2,
         "name": "Register SA",
-        "description": "Official registration of a Société Anonyme with shareholder requirements.",
+        "description": "Official registration of a Société Anonyme with shareholder requirements per Tunisian Commercial Code.",
         "legal_forms": ["SA"],
         "industries": ["all"],
         "sizes": ["medium", "large"],
         "countries": ["TN"],
+        "due_days": 15,
+        "authority": "Commercial Registry (Tribunal de Première Instance)",
+        "required_documents": [
+          "Articles of association (3 copies)",
+          "Proof of capital deposit (minimum TND 5000)",
+          "Shareholder registry with signatures",
+          "Board member identification documents",
+          "Certificate of non-conviction for directors",
+          "Proof of address of registered office"
+        ],
         "steps": [
-          {"id": 201, "name": "Prepare shareholder registry", "order": 1, "description": "Create shareholder list", "is_required": true},
-          {"id": 202, "name": "Appoint board of directors", "order": 2, "description": "Select board members", "is_required": true},
-          {"id": 203, "name": "Register with commercial court", "order": 3, "description": "File registration documents", "is_required": true}
+          {"id": 201, "name": "Prepare shareholder registry", "order": 1, "description": "Create shareholder list with ownership percentages", "is_required": true},
+          {"id": 202, "name": "Appoint board of directors", "order": 2, "description": "Select and document board members", "is_required": true},
+          {"id": 203, "name": "Register with commercial court", "order": 3, "description": "File registration documents with commercial registry", "is_required": true}
         ],
         "source_ids": [1]
       }
@@ -36,14 +55,23 @@
       {
         "id": 3,
         "name": "Tax Compliance",
-        "description": "Obtain tax identification and register for VAT.",
+        "description": "Obtain tax identification and register for VAT with Tunisian tax authority.",
         "legal_forms": ["SARL", "SA"],
         "industries": ["all"],
         "sizes": ["small", "medium", "large"],
         "countries": ["TN"],
+        "due_days": 10,
+        "authority": "Tax Authority (Direction Générale des Impôts)",
+        "required_documents": [
+          "Application form for tax registration",
+          "Commercial registry extract",
+          "Proof of address",
+          "Identification document of legal representative",
+          "Financial projections (for VAT eligibility)"
+        ],
         "steps": [
-          {"id": 301, "name": "Apply for tax ID", "order": 1, "description": "Register with tax authority", "is_required": true},
-          {"id": 302, "name": "Register for VAT", "order": 2, "description": "Enroll in VAT program", "is_required": false}
+          {"id": 301, "name": "Apply for tax ID", "order": 1, "description": "Register with tax authority to obtain NIF (Numéro d'Identification Fiscale)", "is_required": true},
+          {"id": 302, "name": "Register for VAT", "order": 2, "description": "Enroll in VAT program if annual turnover exceeds TND 50,000", "is_required": false}
         ],
         "source_ids": [2]
       }
@@ -52,14 +80,23 @@
       {
         "id": 7,
         "name": "Large Company Reporting",
-        "description": "Additional reporting obligations for companies with more than 50 employees.",
+        "description": "Additional reporting obligations for companies with more than 50 employees per Tunisian Labor and Commercial Code.",
         "legal_forms": ["SARL", "SA"],
         "industries": ["all"],
         "sizes": ["large"],
         "countries": ["TN"],
+        "due_days": 90,
+        "authority": "Commercial Registry & Labor Ministry",
+        "required_documents": [
+          "Annual audited financial statements",
+          "Workforce report (effectifs du personnel)",
+          "Statutory auditor report",
+          "Management report",
+          "Social declaration and payroll records"
+        ],
         "steps": [
-          {"id": 701, "name": "Submit workforce report", "order": 1, "description": "File employment statistics", "is_required": true},
-          {"id": 702, "name": "File annual audited accounts", "order": 2, "description": "Submit audited financials", "is_required": true}
+          {"id": 701, "name": "Submit workforce report", "order": 1, "description": "File employment statistics with labor authority within 90 days of fiscal year end", "is_required": true},
+          {"id": 702, "name": "File annual audited accounts", "order": 2, "description": "Submit audited financials to commercial registry within 90 days", "is_required": true}
         ],
         "source_ids": [2]
       }
@@ -73,23 +110,45 @@
         "industries": ["finance"],
         "sizes": ["medium", "large"],
         "countries": ["TN"],
+        "due_days": 240,
+        "authority": "Central Bank of Tunisia (Banque Centrale de Tunisie)",
+        "required_documents": [
+          "Formal authorization request",
+          "Business plan and financial projections (3-5 years)",
+          "Ownership structure and shareholder information",
+          "AML/KYC compliance policies",
+          "Board member and senior management background checks",
+          "Proof of minimum capital requirements",
+          "Articles of association"
+        ],
         "steps": [
-          {"id": 401, "name": "Submit license application", "order": 1, "description": "File with central bank", "is_required": true},
-          {"id": 402, "name": "Provide AML/KYC policy", "order": 2, "description": "Submit compliance policies", "is_required": true}
+          {"id": 401, "name": "Submit license application", "order": 1, "description": "File with central bank with complete documentation", "is_required": true},
+          {"id": 402, "name": "Provide AML/KYC policy", "order": 2, "description": "Submit comprehensive anti-money laundering and know-your-customer policies", "is_required": true}
         ],
         "source_ids": [1, 2]
       },
       {
         "id": 5,
         "name": "Healthcare Licensing",
-        "description": "Obtain approval from the Ministry of Health for medical services.",
+        "description": "Obtain approval from the Ministry of Health for medical services in Tunisia.",
         "legal_forms": ["SARL", "SA"],
         "industries": ["healthcare"],
         "sizes": ["small", "medium", "large"],
         "countries": ["TN"],
+        "due_days": 90,
+        "authority": "Ministry of Health (Ministère de la Santé)",
+        "required_documents": [
+          "Medical facility authorization request",
+          "Facility floor plan and equipment inventory",
+          "Staff credentials and medical licenses",
+          "Health and safety compliance certification",
+          "Insurance documentation",
+          "Laboratory accreditation (if applicable)",
+          "Infection control and waste management plan"
+        ],
         "steps": [
-          {"id": 501, "name": "Submit medical facility application", "order": 1, "description": "Register facility with ministry", "is_required": true},
-          {"id": 502, "name": "Provide staff certifications", "order": 2, "description": "Submit staff credentials", "is_required": true}
+          {"id": 501, "name": "Submit medical facility application", "order": 1, "description": "Register facility with ministry with complete documentation", "is_required": true},
+          {"id": 502, "name": "Provide staff certifications", "order": 2, "description": "Submit credentials of medical professionals (doctors, nurses)", "is_required": true}
         ],
         "source_ids": [3]
       }
@@ -98,14 +157,24 @@
       {
         "id": 6,
         "name": "Tech/IP Compliance",
-        "description": "Register intellectual property and ensure data protection compliance.",
+        "description": "Register intellectual property and ensure data protection compliance per Tunisian IP and Data Protection laws.",
         "legal_forms": ["SARL", "SA"],
         "industries": ["tech"],
         "sizes": ["small", "medium", "large"],
         "countries": ["TN"],
+        "due_days": 45,
+        "authority": "National Institute for Intellectual Property (INPI) & National Data Protection Authority",
+        "required_documents": [
+          "Patent/trademark application (as applicable)",
+          "Data protection impact assessment (DPIA)",
+          "Privacy policy document",
+          "Software/product specifications",
+          "Security certification or audit",
+          "Company representative identification"
+        ],
         "steps": [
-          {"id": 601, "name": "Register patents or trademarks", "order": 1, "description": "File IP with national office", "is_required": false},
-          {"id": 602, "name": "Comply with data protection law", "order": 2, "description": "Implement GDPR/local standards", "is_required": true}
+          {"id": 601, "name": "Register patents or trademarks", "order": 1, "description": "File IP with INPI if applicable to your business", "is_required": false},
+          {"id": 602, "name": "Comply with data protection law", "order": 2, "description": "Implement data protection compliance per Tunisian Personal Data Protection Law", "is_required": true}
         ],
         "source_ids": [1]
       }
@@ -114,15 +183,58 @@
       {
         "id": 8,
         "name": "Free Zone Compliance",
-        "description": "Special customs and trade procedures for companies in Tunisian free zones.",
+        "description": "Special customs and trade procedures for companies in Tunisian free zones (Enclaves Franches).",
         "legal_forms": ["SARL", "SA"],
         "industries": ["all"],
         "sizes": ["small", "medium", "large"],
         "countries": ["TN"],
         "locations": ["Free Zone"],
+        "due_days": 30,
+        "authority": "Free Zone Authority & Customs Administration",
+        "required_documents": [
+          "Free zone application form",
+          "Commercial registry extract",
+          "Proof of business establishment in free zone",
+          "Financial capacity documentation",
+          "Detailed business plan",
+          "Goods/products inventory",
+          "Customs clearance forms"
+        ],
         "steps": [
-          {"id": 801, "name": "Register with free zone authority", "order": 1, "description": "Enroll in free zone program", "is_required": true},
-          {"id": 802, "name": "Obtain customs clearance", "order": 2, "description": "Get trade authorization", "is_required": true}
+          {"id": 801, "name": "Register with free zone authority", "order": 1, "description": "Enroll in free zone program with required documents", "is_required": true},
+          {"id": 802, "name": "Obtain customs clearance", "order": 2, "description": "Get trade authorization and customs procedures documentation", "is_required": true}
+        ],
+        "source_ids": [1, 2]
+      }
+    ],
+    "startup_incentives": [
+      {
+        "id": 9,
+        "name": "Startup Label Application",
+        "description": "Apply for Tunisian Startup Label (Label Startup Tunisie) to benefit from tax and legal incentives.",
+        "legal_forms": ["SARL", "SA"],
+        "industries": ["tech", "innovation"],
+        "sizes": ["small", "medium"],
+        "countries": ["TN"],
+        "due_days": 365,
+        "validity_days": 2920,
+        "authority": "Ministry of Economy and Digital Transformation (Direction of Innovation and Competitiveness)",
+        "required_documents": [
+          "Startup label application form",
+          "Business plan with innovation focus",
+          "Articles of association",
+          "Tax registry extract (NIF)",
+          "Commercial registry extract",
+          "Proof of office/workplace in Tunisia",
+          "Founding team identification and qualifications",
+          "Product/service prototype or specification",
+          "Financial projections",
+          "Confirmation of innovation and growth potential"
+        ],
+        "steps": [
+          {"id": 901, "name": "Prepare application dossier", "order": 1, "description": "Compile all required documents demonstrating innovation criteria", "is_required": true},
+          {"id": 902, "name": "Submit to competent authority", "order": 2, "description": "File application within 365 days of incorporation with Ministry", "is_required": true},
+          {"id": 903, "name": "Obtain label certification", "order": 3, "description": "Receive Startup Label valid for 2920 days (8 years) with tax benefits", "is_required": true}
         ],
         "source_ids": [1, 2]
       }

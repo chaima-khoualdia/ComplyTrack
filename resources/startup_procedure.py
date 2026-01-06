@@ -8,6 +8,7 @@ from schemas import StartupProcedureResponse, StartupProcedureWithDetails, Proce
 from services.compliance_service import sync_compliance_status_from_procedures
 from services.listing_service import list_startup_procedures, get_procedure_response
 from services.procedures_service import load_procedures, get_procedure_by_id
+from services.auth_service import require_roles
 
 
 router = APIRouter(prefix="/startups", tags=["procedures"])
@@ -16,7 +17,8 @@ router = APIRouter(prefix="/startups", tags=["procedures"])
 @router.get("/{startup_id}/procedures", response_model=list[StartupProcedureWithDetails])
 def list_procedures(
     startup_id: int,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """List all procedures assigned to a startup with enriched details including steps."""
     startup = session.get(Startup, startup_id)
@@ -33,7 +35,8 @@ def list_procedures(
 def get_procedure(
     startup_id: int,
     procedure_id: int,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """Get a specific procedure assigned to a startup with enriched details including steps."""
     startup = session.get(Startup, startup_id)
@@ -62,7 +65,8 @@ def update_procedure_status(
     startup_id: int,
     procedure_id: int,
     status_update: ProcedureStatusUpdate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """
     Update a procedure's status and/or step completion.
@@ -157,7 +161,8 @@ def update_procedure_status(
 def delete_procedure_assignment(
     startup_id: int,
     procedure_id: int,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup")),
 ):
     """Remove a procedure assignment from a startup."""
     startup = session.get(Startup, startup_id)
@@ -194,7 +199,8 @@ def toggle_step_completion(
     procedure_id: int,
     step_id: int,
     step_toggle: StepToggle,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles("admin", "startup", "owner", "worker")),
 ):
     """
     Toggle step completion within a procedure.

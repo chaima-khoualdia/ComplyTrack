@@ -4,6 +4,7 @@ from . import compliance_status
 from . import investor_request
 from . import reminder
 from . import source
+from . import auth
 # if you keep/rename public.py, add it here too
 
 __all__ = [
@@ -15,4 +16,5 @@ __all__ = [
     "source",
     "badge",
     "progress",
+    "auth",
 ]

@@ -5,6 +5,7 @@ from .compliance_status import ComplianceStatus
 from .reminder import Reminder
 from .source import Source
 from .startup_procedure import StartupProcedure
+from .request import Request
 
 __all__ = [
     "User",
@@ -14,4 +15,5 @@ __all__ = [
     "Reminder",
     "Source",
     "StartupProcedure",
+    "Request",
 ]

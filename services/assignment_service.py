@@ -2,6 +2,7 @@
 Assignment Service
 Handles procedure assignment to startups - creating and deleting StartupProcedure records.
 Responsible only for database operations on StartupProcedure, not ComplianceStatus.
+Also handles reminder creation for assigned procedures.
 """
 
 from typing import List
@@ -11,6 +12,7 @@ import json
 from models import StartupProcedure, Startup
 from services.procedures_service import load_procedures, get_procedure_by_id, get_matching_procedures
 from services.compliance_service import sync_compliance_status_from_procedures
+from services.reminder_service import create_reminders_on_initialization, create_reminders_on_assignment
 
 
 def initialize_startup_procedures(
@@ -19,8 +21,8 @@ def initialize_startup_procedures(
     mode: str = "auto"
 ) -> None:
     """
-    Create StartupProcedure records for a startup.
-    Does NOT create ComplianceStatus records - that's handled by the caller or compliance service.
+    Create StartupProcedure records for a startup and generate reminders.
+    Also syncs ComplianceStatus records via compliance service.
     
     Args:
         startup: The Startup object
@@ -57,7 +59,8 @@ def initialize_startup_procedures(
         
         procedure_name = proc.get("name", "Unknown")
         domain = proc.get("domain", "other")
-        due_date = (datetime.utcnow() + timedelta(days=30)).date()
+        due_days = proc.get("due_days", 30)  # Read from procedures.json, default to 30
+        due_date = (startup.created_at + timedelta(days=due_days)).date()
         
         startup_procedure = StartupProcedure(
             startup_id=startup.id,
@@ -72,6 +75,9 @@ def initialize_startup_procedures(
         session.add(startup_procedure)
     
     session.commit()
+    
+    # Create reminders for all assigned procedures
+    create_reminders_on_initialization(startup, session)
 
 
 def assign_procedures_to_startup(
@@ -82,6 +88,7 @@ def assign_procedures_to_startup(
     """
     Assign one or more procedures to a startup (manual assignment).
     Validates procedures exist in procedures.json and creates StartupProcedure records.
+    Generates reminders based on due_days from procedures.json.
     Syncs compliance status after assignment.
     
     Args:
@@ -124,7 +131,8 @@ def assign_procedures_to_startup(
         # Get procedure details
         procedure_name = procedure.get("name", "Unknown")
         domain = procedure.get("domain", "other")
-        due_date = (datetime.utcnow() + timedelta(days=30)).date()
+        due_days = procedure.get("due_days", 30)  # Read from procedures.json, default to 30
+        due_date = (startup.created_at + timedelta(days=due_days)).date()
 
         # Create assignment with new model fields
         startup_procedure = StartupProcedure(
@@ -143,6 +151,11 @@ def assign_procedures_to_startup(
     session.commit()
     for sp in created_assignments:
         session.refresh(sp)
+    
+    # Create reminders for newly assigned procedures
+    new_procedure_ids = [sp.procedure_id for sp in created_assignments]
+    if new_procedure_ids:
+        create_reminders_on_assignment(startup_id, new_procedure_ids, session)
     
     # Sync compliance status for all affected domains
     sync_compliance_status_from_procedures(startup_id, session)
