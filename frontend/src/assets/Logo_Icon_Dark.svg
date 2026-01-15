@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="trackGradient-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.15" />
+    </linearGradient>
+    <linearGradient id="shieldGradient-dark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Icon Group -->
+  <g transform="translate(10, 10)">
+    <!-- Track curves in background -->
+    <path d="M 8.4 28 Q 16.8 16.8, 28 19.599999999999998 T 47.6 28"
+      stroke="#059669" stroke-width="1.12" fill="none" opacity="0.3" stroke-linecap="round"/>
+    <path d="M 8.4 33.6 Q 16.8 22.400000000000002, 28 25.2 T 47.6 33.6"
+      stroke="#10B981" stroke-width="0.84" fill="none" opacity="0.2" stroke-linecap="round"/>
+    
+    <!-- Shield Shape -->
+    <path d="M 28 5.6000000000000005 L 42 11.200000000000001 L 42 25.2 Q 42 39.199999999999996, 28 47.6 Q 14 39.199999999999996, 14 25.2 L 14 11.200000000000001 Z"
+      fill="url(#shieldGradient-dark)" stroke="#059669" stroke-width="1.4000000000000001" stroke-linejoin="round"/>
+    
+    <!-- Inner Shield Accent -->
+    <path d="M 28 10.08 L 38.080000000000005 14 L 38.080000000000005 25.2 Q 38.080000000000005 35.28, 28 42 Q 17.92 35.28, 17.92 25.2 L 17.92 14 Z"
+      fill="none" stroke="#059669" stroke-width="0.84" opacity="0.3" stroke-linejoin="round"/>
+    
+    <!-- Checkmark -->
+    <path d="M 21.28 26.88 L 25.76 32.48 L 34.72 21.28"
+      stroke="#059669" stroke-width="2.8000000000000003" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Checkmark highlight -->
+    <path d="M 21.28 26.88 L 25.76 32.48 L 34.72 21.28"
+      stroke="#10B981" stroke-width="1.4000000000000001" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  </g>
+  
+  
+</svg>

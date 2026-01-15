@@ -261,6 +261,86 @@ Legal Compliance OS
     return send_email(to_email, subject, body, html_body)
 
 
+def send_invitation_email(
+    to_email: str,
+    startup_name: str,
+    owner_name: str,
+    invitation_code: str,
+    app_url: Optional[str] = None,
+) -> bool:
+    """
+    Send an invitation email to a worker after owner approval with the invitation code.
+
+    Args:
+        to_email: Worker's email address
+        startup_name: Name of the startup inviting the worker
+        owner_name: Full name of the owner sending the invite
+        invitation_code: The generated invitation code to activate the request
+        app_url: Optional URL to the app/code entry page
+
+    Returns:
+        True if the email was successfully sent; otherwise False
+    """
+    subject = f"You're invited to join {startup_name}"
+
+    body_lines = [
+        f"Hello,",
+        "",
+        f"You've been invited by {owner_name} to join {startup_name} on Legal Compliance OS.",
+        "",
+        f"Your invitation code: {invitation_code}",
+        "",
+        "How to accept:",
+        "1) Log in as a worker",
+        "2) Go to the code entry page",
+        "3) Paste the invitation code to confirm your access",
+    ]
+    if app_url:
+        body_lines.append("")
+        body_lines.append(f"Open the app: {app_url}")
+    body_lines.append("")
+    body_lines.append("Best regards,\nLegal Compliance OS")
+
+    body = "\n".join(body_lines)
+
+    html_body = f"""
+    <html>
+      <head>
+        <style>
+          body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+          .header {{ background-color: #2563eb; color: white; padding: 20px; text-align: center; }}
+          .content {{ padding: 20px; }}
+          .code-box {{ background-color: #eef2ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; font-size: 18px; font-weight: bold; letter-spacing: 1px; }}
+          .footer {{ background-color: #f4f4f4; padding: 10px; text-align: center; font-size: 12px; color: #666; }}
+          .button {{ background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; display: inline-block; margin-top: 10px; }}
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>You're invited to join {startup_name}</h2>
+        </div>
+        <div class="content">
+          <p>Hello,</p>
+          <p>You've been invited by <strong>{owner_name}</strong> to join <strong>{startup_name}</strong> on Legal Compliance OS.</p>
+          <div class="code-box">Invitation Code: {invitation_code}</div>
+          <p><strong>How to accept:</strong></p>
+          <ol>
+            <li>Log in as a worker</li>
+            <li>Go to the code entry page</li>
+            <li>Paste the invitation code to confirm your access</li>
+          </ol>
+          {f'<p><a class="button" href="{app_url}">Open the App</a></p>' if app_url else ''}
+        </div>
+        <div class="footer">
+          <p>Legal Compliance OS - Secure invites for startup teams</p>
+        </div>
+      </body>
+    </html>
+    """
+
+    return send_email(to_email, subject, body, html_body)
+
+
 def test_email_connection() -> bool:
     """
     Test the Gmail SMTP connection and credentials.

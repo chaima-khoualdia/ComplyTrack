@@ -4,6 +4,11 @@ from . import compliance_status
 from . import investor_request
 from . import reminder
 from . import source
+from . import badge
+from . import startup_procedure
+from . import procedures
+from . import request
+from . import stats
 from . import auth
 # if you keep/rename public.py, add it here too
 
@@ -15,6 +20,9 @@ __all__ = [
     "reminder",
     "source",
     "badge",
-    "progress",
+    "startup_procedure",
+    "procedures",
+    "request",
+    "stats",
     "auth",
 ]

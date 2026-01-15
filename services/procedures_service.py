@@ -4,6 +4,8 @@ Handles loading, flattening, and filtering procedures from procedures.json
 """
 
 import json
+import os
+from pathlib import Path
 from datetime import date, timedelta
 from typing import List, Dict, Any
 
@@ -27,7 +29,14 @@ def load_procedures() -> List[Dict[str, Any]]:
         return _procedures_cache
     
     try:
-        with open("procedures.json", "r") as f:
+        # Resolve procedures.json relative to the repository root (parent of services/)
+        repo_root = Path(__file__).resolve().parent.parent
+        procedures_path = repo_root / "procedures.json"
+        if not procedures_path.exists():
+            # Fallback: try current working directory
+            procedures_path = Path(os.getcwd()) / "procedures.json"
+
+        with open(procedures_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         
         flattened = []
@@ -44,7 +53,7 @@ def load_procedures() -> List[Dict[str, Any]]:
         return flattened
     
     except Exception as e:
-        print(f"Error loading procedures.json: {e}")
+        print(f"Error loading procedures.json from {procedures_path}: {e}")
         return []
 
 

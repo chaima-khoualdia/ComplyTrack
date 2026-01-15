@@ -4,6 +4,7 @@ Provides JWT-based authentication for the API.
 """
 
 import logging
+import os
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status

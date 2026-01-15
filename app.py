@@ -1,6 +1,7 @@
 import os
 import logging
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from db import init_db
 from resources import (
     user,
@@ -11,6 +12,7 @@ from resources import (
     source,
     badge,
     startup_procedure,
+    procedures,
     compliance_status,
     auth,
     request,
@@ -40,6 +42,24 @@ app = FastAPI(
     debug=True,
 )
 
+# Add CORS middleware to allow requests from frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:3003",
+        "http://localhost:3004",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.on_event("startup")
 def on_startup():
     init_db()
@@ -63,5 +83,10 @@ app.include_router(compliance_status.router)
 app.include_router(investor_request.router)
 app.include_router(badge.router)
 app.include_router(startup_procedure.router)
+app.include_router(procedures.router)
 app.include_router(request.router)
 app.include_router(stats.router)
+
+
+@app.get("/ping") 
+def ping(): return {"message": "pong"}

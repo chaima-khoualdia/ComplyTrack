@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict
 import jwt
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from sqlalchemy.orm import Session
@@ -30,8 +30,8 @@ logger.propagate = True
 if not logging.getLogger().handlers:
     logging.basicConfig(level=logging.DEBUG)
 
-# OAuth2 bearer token parser
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login-step2")
+# HTTPBearer security scheme for Swagger UI "Authorize" button
+security = HTTPBearer()
 
 # Password hashing context: prefer argon2 (modern, no length limits), support bcrypt for legacy
 pwd_context = CryptContext(
@@ -159,7 +159,7 @@ def decode_token(token: str) -> Optional[dict]:
 # --- Auth dependencies ---
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session),
 ) -> User:
     """Resolve the bearer token into a User, enforcing validity and existence."""
@@ -169,6 +169,7 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    token = credentials.credentials
     payload = decode_token(token)
     if not payload or "sub" not in payload:
         raise credentials_exception
@@ -248,6 +249,8 @@ def create_and_send_otp(user: User) -> bool:
             logger.error("Failed to send OTP email to %s (check EMAIL_USER/EMAIL_PASS)", user.email)
         else:
             logger.info("OTP sent to %s; expires at %s (key=%s)", user.email, expires_at.isoformat(), email_key)
+            # DEBUG: Log OTP for development
+            logger.info("DEBUG OTP for %s: %s", user.email, otp)
         return sent
     except Exception:
         logger.exception("Unexpected error while creating/sending OTP for %s", user.email)

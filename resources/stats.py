@@ -148,11 +148,42 @@ def get_investor_stats(
 
     companies_need_attention = sum(1 for _, rate in per_startup_rates if rate < 0.7)
 
+    # Build per-startup domain compliance map
+    startup_names = {
+        s.id: session.get(Startup, s.id).name if hasattr(s, "id") else None
+        for s in [type("Obj", (), {"id": sid}) for sid in portfolio_company_ids]
+    }
+
+    def domain_status_label(status_str: str) -> str:
+        s = (status_str or "").lower()
+        if s in {"complete", "completed"}:
+            return "compliant"
+        if s in {"pending", "in_progress"}:
+            return "pending"
+        if s in {"overdue"}:
+            return "at-risk"
+        return "pending"
+
+    status_by_startup: dict[int, dict[str, str]] = {sid: {} for sid in portfolio_company_ids}
+    for st in statuses:
+        sid = st.startup_id
+        if sid in status_by_startup:
+            status_by_startup[sid][st.domain] = domain_status_label(st.status)
+
+    portfolio_companies = [
+        {
+            "id": sid,
+            "name": startup_names.get(sid) or f"Startup {sid}",
+            "status_by_domain": status_by_startup.get(sid, {}),
+        }
+        for sid in portfolio_company_ids
+    ]
+
     return {
         "investor_id": investor_id,
         "portfolio_status": portfolio_status,
         "compliance_by_domain": compliance_by_domain,
-        "portfolio_companies": portfolio_company_ids,
+        "portfolio_companies": portfolio_companies,
         "overall_compliance_rate": overall_compliance_rate,
         "companies_need_attention": companies_need_attention,
     }

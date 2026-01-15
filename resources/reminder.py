@@ -79,6 +79,15 @@ class Reminders:
         session.delete(reminder)
         session.commit()
         return {"message": "Reminder deleted"}
+
+    @router.get("/")
+    def list_all_reminders(
+        session: Session = Depends(get_session),
+        current_user=Depends(require_roles("admin")),
+    ):
+        """List all reminders across all startups (admin-only)."""
+        stmt = select(Reminder)
+        return session.exec(stmt).all()
     
     @router.get("/scheduler/status")
     def scheduler_status(current_user=Depends(require_roles("admin"))):

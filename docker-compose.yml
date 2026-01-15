@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: scos-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - DATABASE_PATH=/app/data/scos.db
+    volumes:
+      # Persist SQLite DB on host (Windows-safe path mapping)
+      - ./data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Frontend will call /api which Nginx proxies to backend
+        - VITE_API_BASE_URL=/api
+    container_name: scos-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
