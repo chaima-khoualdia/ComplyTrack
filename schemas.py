@@ -334,11 +334,15 @@ class StartupProcedureWithDetails(BaseModel):
     procedure_id: int
     procedure_name: str
     procedure_description: Optional[str] = None
+    domain: str
+    status: str
+    due_date: date
+    assigned_at: datetime
+    completed_at: Optional[datetime] = None
     completed_step_ids: list[int]
     total_steps: int
     completed_steps: int
     progress_percent: float
-    assigned_at: datetime
     steps: list[dict]  # Steps loaded from procedures.json with id, name, description, order, is_required
     sources: list[dict] = []  # Enriched sources with title, url, description
     

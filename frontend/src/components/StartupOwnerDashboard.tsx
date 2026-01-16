@@ -23,6 +23,7 @@ interface Procedure {
   templateId?: number;
   name: string;
   dueDate: string;
+  status: string;
   steps: Step[];
   domain: string;
 }
@@ -79,6 +80,7 @@ export function StartupOwnerDashboard({ onDomainClick }: StartupOwnerDashboardPr
             name: proc.procedure_name || 'Procedure',
             domain: getDomainKeyFromProc(proc),
             dueDate: proc.due_date || 'No due date',
+            status: (proc.status || 'pending').toLowerCase(),
             steps: (proc.steps || []).map((s) => ({
               id: String(s.id),
               name: s.name || 'Step',
@@ -136,7 +138,25 @@ export function StartupOwnerDashboard({ onDomainClick }: StartupOwnerDashboardPr
       if (!targetStep || !startupId) return;
 
       const newCompleted = !targetStep.completed;
-      await api.toggleProcedureStep(startupId, Number(templateProcedureId), parseInt(stepId), newCompleted);
+      // Compute new status after toggle
+      const updatedSteps = targetProc.steps.map((s) =>
+        s.id === stepId ? { ...s, completed: newCompleted } : s
+      );
+      const completedCount = updatedSteps.filter((s) => s.completed).length;
+      const totalCount = updatedSteps.length;
+      const newStatus = completedCount === totalCount
+        ? 'completed'
+        : completedCount > 0
+          ? 'in_progress'
+          : 'pending';
+
+      await api.toggleProcedureStep(
+        startupId,
+        Number(templateProcedureId),
+        parseInt(stepId),
+        newCompleted,
+        newStatus
+      );
 
       setProcedures((prev) => ({
         ...prev,
@@ -144,8 +164,9 @@ export function StartupOwnerDashboard({ onDomainClick }: StartupOwnerDashboardPr
           Number(proc.templateId) === Number(templateProcedureId)
             ? {
                 ...proc,
+                status: newStatus,
                 steps: proc.steps.map((step) =>
-                  step.id === stepId ? { ...step, completed: !step.completed } : step
+                  step.id === stepId ? { ...step, completed: newCompleted } : step
                 )
               }
             : proc
@@ -252,7 +273,7 @@ export function StartupOwnerDashboard({ onDomainClick }: StartupOwnerDashboardPr
                               <Edit2 className="w-4 h-4" />
                             </button>
                           </div>
-                          <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>
+                          {!isComplete && <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>}
                         </div>
                         <div className="text-right">
                           <div className={`text-sm font-bold ${

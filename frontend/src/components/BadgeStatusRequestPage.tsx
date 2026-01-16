@@ -29,24 +29,13 @@ export function BadgeStatusRequestPage({
     try {
       setPageLoading(true);
       setError(null);
-      const data = await api.getInvestorPortfolio(user!.id);
-      // Map response to expected format
+      // Fetch ALL startups so investor can request badge for any company in the system
+      const data = await api.listAllStartups();
       const mapped = Array.isArray(data) ? data.map((item: any) => ({
-        startup_id: item.startup_id,
-        startup_name: item.startup_name
+        startup_id: item.id,
+        startup_name: item.name
       })) : [];
-      // Deduplicate by startup_id to avoid duplicate option keys
-      const dedupedMap = new Map<number, { startup_id: number; startup_name: string }>();
-      mapped.forEach((it) => {
-        if (!dedupedMap.has(Number(it.startup_id))) {
-          dedupedMap.set(Number(it.startup_id), {
-            startup_id: Number(it.startup_id),
-            startup_name: it.startup_name
-          });
-        }
-      });
-      const deduped = Array.from(dedupedMap.values());
-      setPortfolio(deduped);
+      setPortfolio(mapped);
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Failed to load portfolio';
       setError(errMsg);

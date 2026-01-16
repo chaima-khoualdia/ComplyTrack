@@ -25,6 +25,16 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
   const [error, setError] = useState<string | null>(null);
   const [adminStats, setAdminStats] = useState<any | null>(null);
 
+  // Stats lookup UI state
+  const [investorLookupId, setInvestorLookupId] = useState<string>('');
+  const [startupLookupId, setStartupLookupId] = useState<string>('');
+  const [investorStatsResult, setInvestorStatsResult] = useState<any | null>(null);
+  const [startupStatsResult, setStartupStatsResult] = useState<any | null>(null);
+  const [investorLookupError, setInvestorLookupError] = useState<string | null>(null);
+  const [startupLookupError, setStartupLookupError] = useState<string | null>(null);
+  const [investorLookupLoading, setInvestorLookupLoading] = useState<boolean>(false);
+  const [startupLookupLoading, setStartupLookupLoading] = useState<boolean>(false);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -37,8 +47,8 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
           api.getSchedulerStatus().catch(() => ({ running: false, jobs: [] })),
           api.getAdminStats().catch(() => null),
         ]);
-  // Admin stats
-  setAdminStats(stats);
+        // Admin stats
+        setAdminStats(stats);
 
         // Map users to UI shape
         setUsers(
@@ -51,17 +61,28 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
           }))
         );
 
-        // Map startups to UI shape
-        setStartups(
-          (startupList || []).map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            matricule: s.matricule_fiscal,
-            founder_id: s.founder_id,
-            badgeStatus: (s.badge_status || 'pending').toLowerCase() === 'green' ? 'compliant' : ((s.badge_status || 'pending').toLowerCase() === 'red' ? 'at-risk' : 'pending'),
-            workers: 0,
-          }))
+        // Map startups to UI shape (initial, workers will be filled by stats below)
+        const mappedStartups = (startupList || []).map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          matricule: s.matricule_fiscal,
+          founder_id: s.founder_id,
+          badgeStatus: (s.badge_status || 'pending').toLowerCase() === 'green' ? 'compliant' : ((s.badge_status || 'pending').toLowerCase() === 'red' ? 'at-risk' : 'pending'),
+          workers: 0,
+        }));
+        setStartups(mappedStartups);
+
+        // Fetch per-startup stats to get active worker counts
+        const withWorkers = await Promise.all(
+          mappedStartups.map(async (s) => {
+            const stats = await api.getStartupStats(s.id).catch(() => null);
+            return {
+              ...s,
+              workers: stats?.active_workers ?? 0,
+            };
+          })
         );
+        setStartups(withWorkers);
 
         // Map reminders to UI shape; attach startupName via lookup
         const startupNameById: Record<number, string> = {};
@@ -114,6 +135,42 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
     };
     load();
   }, []);
+
+  const handleInvestorLookup = async () => {
+    if (!investorLookupId) {
+      setInvestorLookupError('Enter an investor id');
+      return;
+    }
+    setInvestorLookupLoading(true);
+    setInvestorLookupError(null);
+    try {
+      const res = await api.getInvestorStats(investorLookupId);
+      setInvestorStatsResult(res);
+    } catch (e: any) {
+      setInvestorStatsResult(null);
+      setInvestorLookupError(e?.response?.data?.detail || e?.message || 'Failed to fetch investor stats');
+    } finally {
+      setInvestorLookupLoading(false);
+    }
+  };
+
+  const handleStartupLookup = async () => {
+    if (!startupLookupId) {
+      setStartupLookupError('Enter a startup id');
+      return;
+    }
+    setStartupLookupLoading(true);
+    setStartupLookupError(null);
+    try {
+      const res = await api.getStartupStats(startupLookupId);
+      setStartupStatsResult(res);
+    } catch (e: any) {
+      setStartupStatsResult(null);
+      setStartupLookupError(e?.response?.data?.detail || e?.message || 'Failed to fetch startup stats');
+    } finally {
+      setStartupLookupLoading(false);
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -795,15 +852,45 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
                 <div className="space-y-4">
                   <input
                     type="number"
+                    value={investorLookupId}
+                    onChange={(e) => setInvestorLookupId(e.target.value)}
                     placeholder="Enter Investor ID..."
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    onKeyDown={(e) => e.key === 'Enter' && handleInvestorLookup()}
                   />
-                  <button className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                    View Portfolio Stats
+                  <button
+                    onClick={handleInvestorLookup}
+                    disabled={investorLookupLoading}
+                    className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {investorLookupLoading ? 'Loading...' : 'View Portfolio Stats'}
                   </button>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">Enter an investor ID to view their portfolio statistics</p>
-                  </div>
+                  {investorLookupError && (
+                    <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                      {investorLookupError}
+                    </div>
+                  )}
+                  {investorStatsResult && (
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-left">
+                      <p className="text-sm text-gray-700">
+                        Overall Compliance: {(((investorStatsResult.overall_compliance_rate ?? 0) * 100)).toFixed(1)}%
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Companies Needing Attention: {investorStatsResult.companies_need_attention ?? 0}
+                      </p>
+                      <div className="text-sm text-gray-700">
+                        <p className="font-semibold mb-1">Portfolio Status</p>
+                        <p>Compliant: {Math.round((investorStatsResult.portfolio_status?.compliant ?? 0) * 100)}%</p>
+                        <p>Pending: {Math.round((investorStatsResult.portfolio_status?.pending ?? 0) * 100)}%</p>
+                        <p>At Risk: {Math.round((investorStatsResult.portfolio_status?.at_risk ?? 0) * 100)}%</p>
+                      </div>
+                    </div>
+                  )}
+                  {!investorStatsResult && !investorLookupError && (
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-500">Enter an investor ID to view their portfolio statistics</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -812,15 +899,39 @@ export function AdminManagementPage({ onBack, onCreateUser, onCreateStartup, onN
                 <div className="space-y-4">
                   <input
                     type="number"
+                    value={startupLookupId}
+                    onChange={(e) => setStartupLookupId(e.target.value)}
                     placeholder="Enter Startup ID..."
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    onKeyDown={(e) => e.key === 'Enter' && handleStartupLookup()}
                   />
-                  <button className="w-full bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">
-                    View Compliance Stats
+                  <button
+                    onClick={handleStartupLookup}
+                    disabled={startupLookupLoading}
+                    className="w-full bg-green-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {startupLookupLoading ? 'Loading...' : 'View Compliance Stats'}
                   </button>
-                  <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">Enter a startup ID to view detailed compliance statistics</p>
-                  </div>
+                  {startupLookupError && (
+                    <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                      {startupLookupError}
+                    </div>
+                  )}
+                  {startupStatsResult && (
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-left">
+                      <p className="text-sm text-gray-700">Pending Requests: {startupStatsResult.pending_requests ?? 0}</p>
+                      <p className="text-sm text-gray-700">Active Workers: {startupStatsResult.active_workers ?? 0}</p>
+                      <p className="text-sm text-gray-700">Rejected Requests: {startupStatsResult.rejected_requests ?? 0}</p>
+                      <p className="text-sm text-gray-700">
+                        Compliance Score: {(((startupStatsResult.compliance_score ?? 0) * 100)).toFixed(1)}%
+                      </p>
+                    </div>
+                  )}
+                  {!startupStatsResult && !startupLookupError && (
+                    <div className="bg-gray-50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-500">Enter a startup ID to view detailed compliance statistics</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -22,6 +22,7 @@ interface Procedure {
   templateId?: number;
   name: string;
   dueDate: string;
+  status: string;
   steps: Step[];
   domain: string;
 }
@@ -83,6 +84,7 @@ export function WorkerDashboard({ onDomainClick }: WorkerDashboardProps) {
             name: proc.procedure_name || proc.name || 'Procedure',
             domain: getDomainKeyFromProc(proc),
             dueDate: proc.due_date || proc.deadline || 'No due date',
+            status: (proc.status || 'pending').toLowerCase(),
             steps: (proc.steps || []).map((s: any) => ({
               id: String(s.id),
               name: s.name || 'Step',
@@ -130,11 +132,30 @@ export function WorkerDashboard({ onDomainClick }: WorkerDashboardProps) {
     try {
       const domainProcedures = procedures[domain] || [];
       const targetProc = domainProcedures.find((p: any) => Number(p.templateId) === Number(templateProcedureId));
-      const targetStep = targetProc?.steps.find((s) => s.id === stepId);
-      if (!targetStep || !startupId) return;
+      if (!targetProc || !startupId) return;
+      const targetStep = targetProc.steps.find((s) => s.id === stepId);
+      if (!targetStep) return;
 
       const newCompleted = !targetStep.completed;
-      await api.toggleProcedureStep(startupId, Number(templateProcedureId), parseInt(stepId), newCompleted);
+      // Compute new status based on completion after toggle
+      const updatedSteps = targetProc.steps.map((s) =>
+        s.id === stepId ? { ...s, completed: newCompleted } : s
+      );
+      const completedCount = updatedSteps.filter((s) => s.completed).length;
+      const totalCount = updatedSteps.length;
+      const newStatus = completedCount === totalCount
+        ? 'completed'
+        : completedCount > 0
+          ? 'in_progress'
+          : 'pending';
+
+      await api.toggleProcedureStep(
+        startupId,
+        Number(templateProcedureId),
+        parseInt(stepId),
+        newCompleted,
+        newStatus
+      );
 
       setProcedures((prev) => ({
         ...prev,
@@ -142,8 +163,9 @@ export function WorkerDashboard({ onDomainClick }: WorkerDashboardProps) {
           Number((proc as any).templateId) === Number(templateProcedureId)
             ? {
                 ...proc,
+                status: newStatus,
                 steps: proc.steps.map((step) =>
-                  step.id === stepId ? { ...step, completed: !step.completed } : step
+                  step.id === stepId ? { ...step, completed: newCompleted } : step
                 )
               }
             : proc
@@ -250,7 +272,7 @@ export function WorkerDashboard({ onDomainClick }: WorkerDashboardProps) {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <h4 className="font-bold text-gray-900 mb-1">{procedure.name}</h4>
-                          <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>
+                          {!isComplete && <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>}
                         </div>
                         <div className="text-right">
                           <div className={`text-sm font-bold ${

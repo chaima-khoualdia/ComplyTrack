@@ -161,7 +161,7 @@ export function StartupDashboard({ onDomainClick }: StartupDashboardProps) {
                         <p className={`font-semibold ${getStatusColor(procedure.status)}`}>
                           {procedure.name}
                         </p>
-                        <p className="text-sm text-gray-600">{procedure.dueDate}</p>
+                        {procedure.status !== 'completed' && <p className="text-sm text-gray-600">{procedure.dueDate}</p>}
                       </div>
                     </div>
                   </div>

@@ -20,6 +20,7 @@ interface Procedure {
   id: string;
   name: string;
   dueDate: string;
+  status: string;
   steps: Step[];
   domain: string;
   completedStepIds: number[];
@@ -64,6 +65,7 @@ export function ComplianceDetailPage({ domain, onBack }: ComplianceDetailPagePro
             id: String(proc.id),
             name: proc.procedure_name || 'Procedure',
             domain: proc.domain || domain,
+            status: proc.status || 'pending',
             dueDate: proc.due_date || 'No due date',
             completedStepIds: proc.completed_step_ids || [],
             totalSteps: proc.total_steps || 0,
@@ -200,7 +202,7 @@ export function ComplianceDetailPage({ domain, onBack }: ComplianceDetailPagePro
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">{procedure.name}</h3>
-                  <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>
+                  {procedure.status !== 'completed' && <p className="text-sm text-gray-600">Due: {procedure.dueDate}</p>}
                 </div>
                 <span className="text-sm text-gray-500">{procedure.steps.length} steps</span>
               </div>

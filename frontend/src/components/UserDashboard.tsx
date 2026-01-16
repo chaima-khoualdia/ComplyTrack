@@ -178,7 +178,7 @@ export function UserDashboard() {
                   <p className={`font-semibold ${task.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                     {task.title}
                   </p>
-                  <p className="text-sm text-gray-600">Due: {task.dueDate}</p>
+                  {!task.completed && <p className="text-sm text-gray-600">Due: {task.dueDate}</p>}
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   task.priority === 'high' ? 'bg-red-100 text-red-700' :

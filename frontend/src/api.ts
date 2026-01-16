@@ -245,11 +245,16 @@ export async function markProcedureStatus(procedureId: string | number, status: 
   return data;
 }
 
-export async function toggleProcedureStep(startupId: string | number, procedureId: string | number, stepId: number, completed: boolean): Promise<any> {
-  const { data } = await client.patch(`/startups/${startupId}/procedures/${procedureId}`, { 
-    step_id: stepId, 
-    completed 
-  });
+export async function toggleProcedureStep(
+  startupId: string | number,
+  procedureId: string | number,
+  stepId: number,
+  completed: boolean,
+  status?: string
+): Promise<any> {
+  const payload: any = { step_id: stepId, completed };
+  if (status) payload.status = status;
+  const { data } = await client.patch(`/startups/${startupId}/procedures/${procedureId}`, payload);
   return data;
 }
 
